@@ -65,24 +65,32 @@ function nextRef() {
   return `ORD-${refCounter}`;
 }
 
-async function main() {
+/**
+ * Generate the demo data.
+ *
+ * `wipe: true` (the CLI default) clears existing orders first. `wipe: false` is
+ * used by the boot-time auto-seed, which only ever runs against an empty table —
+ * nothing this function does may destroy data someone cares about unless they
+ * explicitly asked for it.
+ */
+async function run({ wipe = true, quiet = false } = {}) {
+  const say = (...a) => { if (!quiet) console.log(...a); };
   await db.ensureReady();
 
-  console.log('Clearing existing demo data…');
-  await db.exec(`
-    DELETE FROM order_events;
-    DELETE FROM orders;
-    DELETE FROM alert_recipients;
-  `);
+  if (wipe) {
+    say('Clearing existing demo data…');
+    await db.exec(`
+      DELETE FROM order_events;
+      DELETE FROM orders;
+      DELETE FROM alert_recipients;
+    `);
+  }
 
   // Make sure reference data exists (sites, facilities, carriers, providers).
   await provision.provisionAll();
 
   const sites = await db.all('SELECT id, name FROM sites WHERE active = 1 ORDER BY name');
-  if (!sites.length) {
-    console.error('No sites found — check sites.json.');
-    process.exit(1);
-  }
+  if (!sites.length) throw new Error('No sites found — check sites.json.');
   const pt = await db.all("SELECT id, name FROM facilities WHERE kind = 'pt' AND active = 1");
   const imaging = await db.all("SELECT id, name FROM facilities WHERE kind = 'imaging' AND active = 1");
   const carriers = await db.all('SELECT id, name FROM carriers WHERE active = 1');
@@ -134,7 +142,7 @@ async function main() {
     { note: 'non-WC · imaging complete', type: 'ct', followup: -14, ordered: -38, auth: 'approved', authReq: -36, authDec: -33, scheduled: -26, received: -20, closed: 'complete', nonWc: true },
   ];
 
-  console.log(`Seeding ${specs.length * sites.length} orders across ${sites.length} sites…`);
+  say(`Seeding ${specs.length * sites.length} orders across ${sites.length} sites…`);
 
   let n = 0;
   for (const [si, site] of sites.entries()) {
@@ -230,14 +238,35 @@ async function main() {
   await auth.setSetting('wc_block_enabled', '0');
 
   const sitePins = require('./sites.json').sites || [];
-  console.log(`\nSeeded ${n} orders.`);
-  console.log('\nSign in to the staff worklist with:');
-  for (const s of sitePins) console.log(`  ${s.name.padEnd(14)} PIN ${s.pin}`);
-  console.log(`\nLeadership password: ${process.env.REF_LEADERSHIP_PASSWORD || 'changeme'}`);
-  console.log('\nReminders are OFF and the work-comp block is OFF by default — both in Leadership → Settings.\n');
+  say(`\nSeeded ${n} orders.`);
+  say('\nSign in to the staff worklist with:');
+  for (const s of sitePins) say(`  ${s.name.padEnd(14)} PIN ${s.pin}`);
+  say(`\nLeadership password: ${process.env.REF_LEADERSHIP_PASSWORD || 'changeme'}`);
+  say('\nReminders are OFF and the work-comp block is OFF by default — both in Leadership → Settings.\n');
+  return n;
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+/**
+ * Populate demo data only when the orders table is completely empty.
+ *
+ * Used by REF_AUTOSEED on hosts with an ephemeral disk, so a demo deployment
+ * comes back up populated after a restart instead of showing an empty worklist.
+ * It never deletes anything and never runs when any order already exists, so it
+ * cannot overwrite real work.
+ */
+async function seedIfEmpty() {
+  await db.ensureReady();
+  const row = await db.get('SELECT COUNT(*) AS c FROM orders');
+  if (row && Number(row.c) > 0) return { seeded: false, reason: 'orders already present' };
+  const n = await run({ wipe: false, quiet: true });
+  return { seeded: true, orders: n };
+}
+
+module.exports = { run, seedIfEmpty };
+
+if (require.main === module) {
+  run({ wipe: true }).catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

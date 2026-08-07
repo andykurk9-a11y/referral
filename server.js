@@ -893,6 +893,23 @@ app.use('/api', staff);
 const bootstrap = (async () => {
   const initial = await auth.ensureDefaultPassword();
   await provision.provisionAll();
+
+  // Demo hosts with an ephemeral disk (Render's free tier, for one) lose the
+  // database on every restart, which would otherwise leave a leadership demo
+  // staring at an empty worklist. Opt in with REF_AUTOSEED=true. It only ever
+  // runs when the orders table is completely empty and never deletes anything,
+  // so it cannot overwrite real work — but leave it off anywhere that matters.
+  if (String(process.env.REF_AUTOSEED || '').toLowerCase() === 'true') {
+    try {
+      const result = await require('./seed').seedIfEmpty();
+      console.log(result.seeded
+        ? `Auto-seed: inserted ${result.orders} demo orders into an empty database.`
+        : `Auto-seed: skipped (${result.reason}).`);
+    } catch (e) {
+      console.error('Auto-seed failed:', e.message);
+    }
+  }
+
   return initial;
 })();
 
