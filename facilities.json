@@ -1,0 +1,11 @@
+{
+  "_comment": "PT clinics and imaging centres orders are sent to. 'kind' is pt | imaging | both. This is the dimension the vendor scorecard aggregates turnaround time over, so the names should match how staff actually refer to them.",
+  "facilities": [
+    { "name": "Riverfront Physical Therapy", "kind": "pt",      "phone": "269-555-0142" },
+    { "name": "Lakeside Rehab & Sports Med", "kind": "pt",      "phone": "269-555-0177" },
+    { "name": "Great Lakes Therapy Partners","kind": "pt",      "phone": "269-555-0193" },
+    { "name": "Midwest Imaging — Portage",   "kind": "imaging", "phone": "269-555-0210" },
+    { "name": "Borgess Advanced Imaging",    "kind": "imaging", "phone": "269-555-0244" },
+    { "name": "Open MRI of Kalamazoo",       "kind": "imaging", "phone": "269-555-0268" }
+  ]
+}

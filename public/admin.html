@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Referral Tracker — Leadership</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23003592'/%3E%3Cpath d='M9 17.5l4.5 4.5L23 12' stroke='white' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div id="demoBanner" class="demo-banner" hidden>
+  <strong>Demo</strong> — do not enter real patient information.
+</div>
+
+<!-- ── Sign in ───────────────────────────────────────────────────────────── -->
+<section id="signin" class="signin" hidden>
+  <div class="signin-card">
+    <h1>Leadership</h1>
+    <p class="muted">Referral &amp; results tracker</p>
+    <form id="signinForm">
+      <label for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password" required>
+      <button type="submit" class="primary btn-block">Sign in</button>
+      <p id="signinError" class="error" role="alert" hidden></p>
+    </form>
+  </div>
+</section>
+
+<!-- ── App ───────────────────────────────────────────────────────────────── -->
+<div id="app" hidden>
+
+  <header class="topbar">
+    <span class="brand-mark"></span>
+    <div class="brand-lockup">
+      <span class="wn-word">Referral &amp; results</span>
+      <span class="wn-tag">Leadership</span>
+    </div>
+    <span class="spacer"></span>
+    <select id="siteFilter" class="site-filter" aria-label="Site"></select>
+    <a href="index.html">Worklist</a>
+    <button type="button" class="topbar-icon-btn" id="signoutBtn">Sign out</button>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-panel="dashboard" aria-selected="true">Dashboard</button>
+    <button class="tab" role="tab" data-panel="scorecard" aria-selected="false">Vendor scorecard</button>
+    <button class="tab" role="tab" data-panel="orders" aria-selected="false">Orders</button>
+    <button class="tab" role="tab" data-panel="reference" aria-selected="false">Sites &amp; facilities</button>
+    <button class="tab" role="tab" data-panel="reminders" aria-selected="false">Reminders</button>
+    <button class="tab" role="tab" data-panel="settings" aria-selected="false">Settings</button>
+  </nav>
+
+  <main class="wrap">
+
+    <!-- Dashboard -->
+    <section data-panel-body="dashboard">
+      <div class="northstar">
+        <div class="northstar-label">Follow-ups with every expected result in hand</div>
+        <div class="northstar-value" id="readiness">—</div>
+        <div class="northstar-sub" id="readinessSub"></div>
+      </div>
+
+      <div class="stat-grid" id="stats"></div>
+
+      <div class="card">
+        <h3>Open orders by severity</h3>
+        <div id="sevBars" class="sev-bars"></div>
+        <p class="hint">Severity is the highest rung an order sits on across all three ladders.</p>
+      </div>
+    </section>
+
+    <!-- Scorecard -->
+    <section data-panel-body="scorecard" hidden>
+      <p class="view-hint">
+        Median calendar days from order to result, by facility — slowest first. This falls out of
+        data staff already enter, and it is what turns the tracker from cost-avoidance into a
+        performance-management capability.
+      </p>
+      <div class="table-wrap"><table id="scorecardTable"></table></div>
+    </section>
+
+    <!-- Orders -->
+    <section data-panel-body="orders" hidden>
+      <p class="view-hint">Every order, most severe first. <a href="/api/admin/export.csv">Download CSV</a></p>
+      <div class="table-wrap"><table id="ordersTable"></table></div>
+    </section>
+
+    <!-- Reference data -->
+    <section data-panel-body="reference" hidden>
+      <div class="card">
+        <h3>Sites</h3>
+        <div class="table-wrap"><table id="sitesTable"></table></div>
+        <form id="siteForm" class="inline-form">
+          <input name="name" placeholder="Site name" required>
+          <input name="pin" placeholder="Staff PIN" inputmode="numeric">
+          <button type="submit" class="primary">Add site</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Facilities</h3>
+        <p class="hint">PT clinics and imaging centres. This is the dimension the scorecard ranks.</p>
+        <div class="table-wrap"><table id="facilitiesTable"></table></div>
+        <form id="facilityForm" class="inline-form">
+          <input name="name" placeholder="Facility name" required>
+          <select name="kind">
+            <option value="pt">PT</option>
+            <option value="imaging">Imaging</option>
+            <option value="both">Both</option>
+          </select>
+          <input name="phone" placeholder="Phone">
+          <button type="submit" class="primary">Add facility</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Carriers &amp; payers</h3>
+        <div class="table-wrap"><table id="carriersTable"></table></div>
+        <form id="carrierForm" class="inline-form">
+          <input name="name" placeholder="Carrier name" required>
+          <input name="phone" placeholder="Phone">
+          <button type="submit" class="primary">Add carrier</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Providers</h3>
+        <div class="table-wrap"><table id="providersTable"></table></div>
+        <form id="providerForm" class="inline-form">
+          <input name="name" placeholder="Provider name" required>
+          <select name="site_id" id="providerSite"><option value="">Any site</option></select>
+          <button type="submit" class="primary">Add provider</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Reminders -->
+    <section data-panel-body="reminders" hidden>
+      <div class="card" id="smtpCard"></div>
+
+      <div class="card">
+        <h3>Recipients</h3>
+        <p class="hint">One digest per site per day, split into three role-tagged sections.</p>
+        <div id="recipients"></div>
+        <form id="recipientForm" class="inline-form">
+          <select name="site_id" id="recipientSite"></select>
+          <input name="email" type="email" placeholder="name@example.org" required>
+          <button type="submit" class="primary">Add recipient</button>
+        </form>
+        <p id="recipientMsg" hidden></p>
+      </div>
+
+      <div class="card">
+        <h3>Preview &amp; send</h3>
+        <div class="actions">
+          <button type="button" class="ghost" id="previewBtn">Preview digest</button>
+          <button type="button" class="ghost" id="testBtn">Send test email</button>
+          <button type="button" class="ghost" id="runBtn">Run digest now</button>
+        </div>
+        <p id="digestMsg" hidden></p>
+        <pre id="digestPreview" class="preview" hidden></pre>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section data-panel-body="settings" hidden>
+      <div class="card">
+        <h3>Reminders</h3>
+        <label class="switch">
+          <input type="checkbox" id="setReminders">
+          <span>Send daily reminder digests</span>
+        </label>
+        <p class="hint">Off by default. Turn on once recipients are configured and SMTP is working.</p>
+      </div>
+
+      <div class="card">
+        <h3>Work-comp escalation block</h3>
+        <label class="switch">
+          <input type="checkbox" id="setWc">
+          <span>Store claim number, employer, adjuster and case manager</span>
+        </label>
+        <p class="hint">
+          Off by default. While it is off the API <strong>refuses</strong> these fields — they are
+          not merely hidden. Turn this on only once Privacy &amp; Compliance has signed off.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Demo banner</h3>
+        <label class="switch">
+          <input type="checkbox" id="setDemo">
+          <span>Show the "do not enter real patient information" banner</span>
+        </label>
+      </div>
+
+      <div class="card">
+        <h3>Ladder thresholds</h3>
+        <p class="hint">
+          Business days. These are the defaults from the proposal — tune them after 60 days of
+          real data rather than treating them as findings.
+        </p>
+        <div id="thresholds" class="threshold-grid"></div>
+        <div class="actions">
+          <button type="button" class="primary" id="saveThresholds">Save thresholds</button>
+          <button type="button" class="ghost" id="resetThresholds">Reset to defaults</button>
+        </div>
+        <p id="thresholdMsg" hidden></p>
+      </div>
+
+      <div class="card">
+        <h3>Leadership password</h3>
+        <form id="pwForm" class="inline-form">
+          <input name="password" type="password" placeholder="New password (8+ characters)" required minlength="8">
+          <button type="submit" class="primary">Change password</button>
+        </form>
+        <p id="pwMsg" hidden></p>
+      </div>
+
+      <div class="card">
+        <h3>System</h3>
+        <dl class="kv" id="sysInfo"></dl>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "_comment": "Work comp carriers / TPAs, and payers for non-work-comp orders. Organisations rather than people, so these are held regardless of the work-comp escalation block setting.",
+  "carriers": [
+    { "name": "Accident Fund",            "phone": "800-555-0101" },
+    { "name": "Sedgwick",                 "phone": "800-555-0119" },
+    { "name": "Michigan Millers",         "phone": "800-555-0126" },
+    { "name": "Travelers",                "phone": "800-555-0134" },
+    { "name": "Blue Cross Blue Shield MI","phone": "800-555-0158" },
+    { "name": "Priority Health",          "phone": "800-555-0163" }
+  ]
+}

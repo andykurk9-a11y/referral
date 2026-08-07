@@ -1,0 +1,320 @@
+/*
+  Staff worklist. Layered on common.css (WellNow brand tokens + the validated
+  four-tier status scale), which is shared verbatim with the DME stock tracker.
+
+  The severity scale is doing information design work here, not decoration: a
+  row's colour is the rung it sits on, so the list can be triaged at a glance
+  without reading a single date.
+*/
+
+/*
+  Any element given a `display` here would otherwise beat the [hidden]
+  attribute's default `display: none`, leaving panels visible after JS hides
+  them. Assert it once, globally, rather than remembering it per component.
+*/
+[hidden] { display: none !important; }
+
+/* ── demo banner ──────────────────────────────────────────────────────────── */
+.demo-banner {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-bottom: 1px solid rgba(138, 90, 0, .25);
+  padding: 8px 20px;
+  font-size: 14px;
+  text-align: center;
+  position: relative;
+}
+.demo-dismiss {
+  position: absolute;
+  right: 10px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: 0;
+  font-size: 20px; line-height: 1;
+  color: inherit; cursor: pointer;
+  padding: 0 8px;
+}
+
+/* ── sign in ──────────────────────────────────────────────────────────────── */
+.signin {
+  min-height: 80vh;
+  display: grid;
+  place-items: center;
+  padding: 40px 20px;
+}
+.signin-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 32px;
+  width: min(420px, 100%);
+}
+.signin-card h1 { margin: 0 0 4px; font-size: 22px; }
+.signin-card label {
+  display: block;
+  margin: 18px 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.signin-card select, .signin-card input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  background: var(--surface);
+  color: var(--text);
+}
+.btn-block { width: 100%; margin-top: 22px; }
+
+/* ── topbar ───────────────────────────────────────────────────────────────── */
+/*
+  The topbar itself is common.css's — a brand-gradient flex bar with white text,
+  `.brand-lockup`, `.spacer`, `.topbar-icon-btn` and its own `a` styling. Do not
+  re-declare `display` or `background` on `.topbar` here: common.css's rules
+  still apply to whatever this file leaves alone, and a partial override leaves
+  the bar half-styled (white links on a white ground). Only the mark is added.
+*/
+.brand-mark {
+  width: 8px; height: 32px; border-radius: 3px;
+  background: linear-gradient(180deg, var(--yellow), var(--magenta));
+  flex: none;
+}
+
+/* ── tabs ─────────────────────────────────────────────────────────────────── */
+.tabs {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; gap: 2px;
+  padding: 0 20px;
+  overflow-x: auto;
+  position: sticky; top: 0; z-index: 19;
+}
+.tab {
+  background: none; border: 0;
+  border-bottom: 3px solid transparent;
+  padding: 12px 14px;
+  font: inherit; font-size: 14px; font-weight: 600;
+  color: var(--muted);
+  cursor: pointer; white-space: nowrap;
+}
+.tab:hover { color: var(--text); }
+.tab[aria-selected="true"] { color: var(--brand); border-bottom-color: var(--brand); }
+.count {
+  display: inline-block;
+  min-width: 20px;
+  padding: 1px 6px;
+  margin-left: 5px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.tab[aria-selected="true"] .count { background: var(--brand-light); color: var(--brand); }
+
+/* ── list ─────────────────────────────────────────────────────────────────── */
+.wrap { max-width: 1180px; margin: 0 auto; padding: 20px; }
+.view-hint { color: var(--muted); font-size: 14px; margin: 0 0 14px; }
+
+.list { display: flex; flex-direction: column; gap: 8px; }
+
+.row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 74px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+}
+.row:hover { border-color: var(--brand-light); background: var(--brand-tint); }
+.row:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+.row.sev-critical { border-left-color: var(--danger); }
+.row.sev-urgent   { border-left-color: var(--serious); }
+.row.sev-watch    { border-left-color: var(--warn); }
+.row.sev-calm     { border-left-color: var(--good); }
+
+.rung {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 700; font-size: 14px;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+}
+.rung.sev-critical { color: var(--danger);  background: var(--danger-bg); }
+.rung.sev-urgent   { color: var(--serious); background: var(--serious-bg); }
+.rung.sev-watch    { color: var(--warn);    background: var(--warn-bg); }
+.rung.sev-calm     { color: var(--good);    background: var(--good-bg); }
+.rung.sev-none     { color: var(--muted);   background: var(--surface-2); }
+
+.row-main { min-width: 0; }
+.row-title {
+  font-weight: 700;
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+}
+.row-ref { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.row-desc { color: var(--muted); font-weight: 500; font-size: 14px; }
+.row-action { font-size: 13.5px; color: var(--text); margin-top: 3px; }
+.row-meta { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+
+.row-right { text-align: right; white-space: nowrap; }
+.row-days {
+  font-size: 20px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.row-days-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+
+.pill {
+  display: inline-block;
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .04em;
+  padding: 2px 7px; border-radius: 4px;
+  background: var(--surface-2); color: var(--muted);
+}
+.pill.wc { background: var(--lavender-light); color: var(--lavender-dark); }
+
+.empty {
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 44px 20px;
+  text-align: center;
+  color: var(--muted);
+}
+.empty strong { display: block; color: var(--text); font-size: 16px; margin-bottom: 4px; }
+
+/* ── drawer ───────────────────────────────────────────────────────────────── */
+.drawer { position: fixed; inset: 0; z-index: 40; }
+.drawer-scrim { position: absolute; inset: 0; background: rgba(10, 26, 64, .45); }
+.drawer-panel {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  width: min(620px, 100%);
+  background: var(--bg);
+  box-shadow: var(--shadow-lg);
+  display: flex; flex-direction: column;
+}
+.drawer-head {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+}
+.drawer-head h2 { margin: 0; font-size: 19px; }
+.drawer-head .muted { margin: 2px 0 0; font-size: 13.5px; }
+.drawer-body { padding: 20px; overflow-y: auto; flex: 1; }
+.icon-btn {
+  background: none; border: 0; font-size: 26px; line-height: 1;
+  color: var(--muted); cursor: pointer; padding: 0 4px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.card h3 {
+  margin: 0 0 10px;
+  font-size: 12px; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--muted);
+}
+
+.rung-item {
+  display: grid; grid-template-columns: 62px 1fr; gap: 12px;
+  padding: 9px 0; border-bottom: 1px solid var(--surface-2);
+}
+.rung-item:last-child { border-bottom: 0; }
+.rung-item .action { font-size: 14px; }
+
+.kv { display: grid; grid-template-columns: 140px 1fr; gap: 5px 12px; font-size: 14px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-weight: 600; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.log { list-style: none; margin: 0; padding: 0; }
+.log li {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--surface-2);
+  font-size: 14px;
+}
+.log li:last-child { border-bottom: 0; }
+.log .when {
+  font-size: 12px; color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.log .kind {
+  display: inline-block;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 1px 6px; border-radius: 3px;
+  background: var(--brand-light); color: var(--brand);
+  margin-right: 6px;
+}
+.log .kind.outreach { background: var(--warn-bg); color: var(--warn); }
+.log .kind.status_change { background: var(--surface-2); color: var(--muted); }
+.log .kind.reminder_sent { background: var(--lavender-light); color: var(--lavender-dark); }
+
+/* ── forms ────────────────────────────────────────────────────────────────── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field { display: flex; flex-direction: column; min-width: 0; }
+.span2 { grid-column: 1 / -1; }
+.field label { font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+.field input, .field select, .field textarea {
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  background: var(--surface);
+  color: var(--text);
+  width: 100%;
+}
+.field textarea { resize: vertical; min-height: 76px; }
+.req { color: var(--red); }
+.hint { font-size: 12px; color: var(--muted); margin: 5px 0 0; }
+.hint.keystone { color: var(--brand); font-weight: 600; }
+.form-actions { display: flex; gap: 8px; margin-top: 4px; }
+
+.wc-block {
+  border: 1px solid var(--lavender-light);
+  background: var(--lavender-light);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+.wc-block h3 { margin: 0 0 10px; font-size: 13px; color: var(--lavender-dark); }
+.wc-off { font-style: italic; }
+
+.error {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: var(--radius-sm);
+  padding: 9px 11px;
+  font-size: 14px;
+  margin: 12px 0 0;
+}
+.ok {
+  color: var(--good);
+  background: var(--good-bg);
+  border-radius: var(--radius-sm);
+  padding: 9px 11px;
+  font-size: 14px;
+  margin: 12px 0 0;
+}
+
+@media (max-width: 700px) {
+  .row { grid-template-columns: 62px 1fr; }
+  .row-right { grid-column: 2; text-align: left; }
+  .form-grid { grid-template-columns: 1fr; }
+  .kv { grid-template-columns: 120px 1fr; }
+}

@@ -1,0 +1,39 @@
+# Netlify configuration for the Referral & Results Tracker.
+#
+# The static staff/leadership pages (public/) are served by Netlify's CDN.
+# The Express server runs as a single Function; /api/* is routed to it.
+#
+# Requires a hosted database — set these environment variables in Netlify
+# (Site settings → Environment variables):
+#   TURSO_DATABASE_URL       e.g. libsql://your-db-name-org.turso.io
+#   TURSO_AUTH_TOKEN         the database auth token
+#   REF_LEADERSHIP_PASSWORD  a strong leadership password
+#   (optional) SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, SMTP_FROM
+#
+# Without the SMTP_* variables the app still runs and still builds digests —
+# they simply are not delivered. See DEPLOY.md.
+
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+  command = "npm install"
+
+[functions]
+  # @libsql/client/web is pure JS (no native binary), so esbuild bundles it fine.
+  node_bundler = "esbuild"
+  # Ship the provisioning config files with the function bundle.
+  included_files = ["sites.json", "facilities.json", "carriers.json", "providers.json"]
+
+# Daily reminder digests. Serverless has no always-on process, so the check runs
+# on a schedule. Default: once each weekday morning at 12:00 UTC (07:00 ET /
+# 08:00 EDT). Change the cron to suit — "0 12 * * 1-5" is weekdays only.
+# At most one digest per site per calendar day, so extra runs are safe.
+[functions."reminders-cron"]
+  schedule = "0 12 * * *"
+
+# Send API calls to the function; everything else serves the static site.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true

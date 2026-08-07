@@ -1,0 +1,10 @@
+{
+  "_comment": "Ordering providers, optionally tied to a home site. Used to attribute an order and to measure provider-side review SLA compliance. Names here are examples — replace with the real roster.",
+  "providers": [
+    { "name": "A. Whitfield, PA-C",  "site": "Portage" },
+    { "name": "M. Okonkwo, NP",      "site": "Portage" },
+    { "name": "R. Delacroix, DO",    "site": "Kalamazoo" },
+    { "name": "S. Bergstrom, PA-C",  "site": "Kalamazoo" },
+    { "name": "J. Ramaswamy, MD",    "site": "Battle Creek" }
+  ]
+}

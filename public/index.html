@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Referral &amp; Results Worklist</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23003592'/%3E%3Cpath d='M9 17.5l4.5 4.5L23 12' stroke='white' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div id="demoBanner" class="demo-banner" hidden>
+  <strong>Demo</strong> — do not enter real patient information.
+  <button type="button" class="demo-dismiss" id="dismissBanner" aria-label="Dismiss">&times;</button>
+</div>
+
+<!-- ── Sign in ───────────────────────────────────────────────────────────── -->
+<section id="signin" class="signin" hidden>
+  <div class="signin-card">
+    <h1>Referral &amp; results worklist</h1>
+    <p class="muted">Sign in to your site to work today's list.</p>
+    <form id="signinForm">
+      <label for="siteSelect">Site</label>
+      <select id="siteSelect" required></select>
+
+      <label for="pinInput">PIN</label>
+      <input id="pinInput" type="password" inputmode="numeric" autocomplete="off" required>
+
+      <button type="submit" class="primary btn-block">Sign in</button>
+      <p id="signinError" class="error" role="alert" hidden></p>
+    </form>
+  </div>
+</section>
+
+<!-- ── App ───────────────────────────────────────────────────────────────── -->
+<div id="app" hidden>
+
+  <header class="topbar">
+    <span class="brand-mark"></span>
+    <div class="brand-lockup">
+      <span class="wn-word">Referral &amp; results</span>
+      <span class="wn-tag" id="siteName"></span>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" class="topbar-icon-btn" id="newOrderBtn">New order</button>
+    <a href="admin.html">Leadership</a>
+    <button type="button" class="topbar-icon-btn" id="signoutBtn">Sign out</button>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="worklist" aria-selected="true">
+      Daily worklist <span class="count" data-count="worklist">0</span>
+    </button>
+    <button class="tab" role="tab" data-tab="auth" aria-selected="false">
+      Authorizations <span class="count" data-count="auth">0</span>
+    </button>
+    <button class="tab" role="tab" data-tab="review" aria-selected="false">
+      Awaiting review <span class="count" data-count="review">0</span>
+    </button>
+    <button class="tab" role="tab" data-tab="pt_response" aria-selected="false">
+      PT response due <span class="count" data-count="pt_response">0</span>
+    </button>
+    <button class="tab" role="tab" data-tab="open" aria-selected="false">
+      All open <span class="count" data-count="open">0</span>
+    </button>
+  </nav>
+
+  <main class="wrap">
+    <p class="view-hint" id="viewHint"></p>
+    <div id="list" class="list" aria-live="polite"></div>
+  </main>
+</div>
+
+<!-- ── Order detail drawer ───────────────────────────────────────────────── -->
+<div id="drawer" class="drawer" hidden>
+  <div class="drawer-scrim" data-close-drawer></div>
+  <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+    <header class="drawer-head">
+      <div>
+        <h2 id="drawerTitle">Order</h2>
+        <p class="muted" id="drawerSub"></p>
+      </div>
+      <button type="button" class="icon-btn" data-close-drawer aria-label="Close">&times;</button>
+    </header>
+    <div class="drawer-body" id="drawerBody"></div>
+  </div>
+</div>
+
+<!-- ── New order dialog ──────────────────────────────────────────────────── -->
+<div id="newOrder" class="drawer" hidden>
+  <div class="drawer-scrim" data-close-new></div>
+  <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="newOrderTitle">
+    <header class="drawer-head">
+      <div>
+        <h2 id="newOrderTitle">New order</h2>
+        <p class="muted">Touchpoint 1 — record this when the provider signs the order.</p>
+      </div>
+      <button type="button" class="icon-btn" data-close-new aria-label="Close">&times;</button>
+    </header>
+    <div class="drawer-body">
+      <form id="newOrderForm" class="form-grid">
+        <div class="field span2">
+          <label for="f_reference">Reference <span class="req">*</span></label>
+          <input id="f_reference" name="reference" required maxlength="60" placeholder="e.g. ORD-40218">
+          <p class="hint">The value staff use to find this patient in the EMR. No names — see the README.</p>
+        </div>
+
+        <div class="field">
+          <label for="f_order_type">Order type <span class="req">*</span></label>
+          <select id="f_order_type" name="order_type" required>
+            <option value="">Choose…</option>
+            <option value="pt">Physical therapy</option>
+            <option value="ot">Occupational therapy</option>
+            <option value="mri">MRI</option>
+            <option value="ct">CT</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="f_case_type">Case type</label>
+          <select id="f_case_type" name="case_type">
+            <option value="wc">Work comp</option>
+            <option value="non_wc">Non-work-comp</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="f_body_part">Body part</label>
+          <input id="f_body_part" name="body_part" placeholder="e.g. Lumbar spine">
+        </div>
+
+        <div class="field">
+          <label for="f_laterality">Laterality</label>
+          <select id="f_laterality" name="laterality">
+            <option value="">—</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+            <option value="bilateral">Bilateral</option>
+            <option value="na">Not applicable</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="f_provider_id">Ordering provider</label>
+          <select id="f_provider_id" name="provider_id"><option value="">—</option></select>
+        </div>
+
+        <div class="field">
+          <label for="f_facility_id">Facility</label>
+          <select id="f_facility_id" name="facility_id"><option value="">—</option></select>
+        </div>
+
+        <div class="field">
+          <label for="f_carrier_id">Carrier / payer</label>
+          <select id="f_carrier_id" name="carrier_id"><option value="">—</option></select>
+        </div>
+
+        <div class="field">
+          <label for="f_ordered_on">Ordered on</label>
+          <input id="f_ordered_on" name="ordered_on" type="date">
+        </div>
+
+        <div class="field">
+          <label for="f_auth_status">Authorization</label>
+          <select id="f_auth_status" name="auth_status">
+            <option value="not_required">Not required</option>
+            <option value="requested">Requested</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="denied">Denied</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="f_followup_on">Follow-up appointment</label>
+          <input id="f_followup_on" name="followup_on" type="date">
+          <p class="hint keystone">The keystone field — every reminder counts down to this date.</p>
+        </div>
+
+        <div class="field">
+          <label for="f_expected_result_on">Result expected by</label>
+          <input id="f_expected_result_on" name="expected_result_on" type="date">
+          <p class="hint">Without this, a result that never arrives raises no alarm.</p>
+        </div>
+
+        <div class="field span2">
+          <label for="f_owner_name">Owner</label>
+          <input id="f_owner_name" name="owner_name" placeholder="Who is chasing this">
+        </div>
+
+        <div id="wcFields" class="wc-block span2" hidden>
+          <h3>Work-comp escalation</h3>
+          <div class="form-grid">
+            <div class="field"><label for="f_claim_number">Claim number</label><input id="f_claim_number" name="claim_number"></div>
+            <div class="field"><label for="f_employer">Employer</label><input id="f_employer" name="employer"></div>
+            <div class="field"><label for="f_adjuster_name">Adjuster</label><input id="f_adjuster_name" name="adjuster_name"></div>
+            <div class="field"><label for="f_adjuster_contact">Adjuster contact</label><input id="f_adjuster_contact" name="adjuster_contact"></div>
+            <div class="field span2"><label for="f_case_manager">Nurse case manager</label><input id="f_case_manager" name="case_manager"></div>
+          </div>
+        </div>
+        <p id="wcOffNote" class="hint span2 wc-off">
+          The work-comp escalation block (claim number, employer, adjuster) is turned off.
+          Leadership can enable it in Settings once Compliance has signed off.
+        </p>
+
+        <div class="span2 form-actions">
+          <button type="submit" class="primary">Create order</button>
+          <button type="button" class="ghost" data-close-new>Cancel</button>
+        </div>
+        <p id="newOrderError" class="error span2" role="alert" hidden></p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

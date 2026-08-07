@@ -1,0 +1,8 @@
+{
+  "_comment": "Sites created automatically on first boot. Each needs a staff PIN for the worklist sign-in. Existing sites and any edits made in the app are never overwritten — add a name here and it appears on the next deploy; remove one and the existing site is left alone (deactivate it in Leadership instead).",
+  "sites": [
+    { "name": "Portage",      "pin": "5218" },
+    { "name": "Kalamazoo",    "pin": "5220" },
+    { "name": "Battle Creek", "pin": "5231" }
+  ]
+}
