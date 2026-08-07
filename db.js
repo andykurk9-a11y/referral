@@ -46,11 +46,23 @@ if (TURSO_URL) {
   // which surfaces to the browser as a bare 502 with nothing to go on. Say what
   // is actually wrong instead.
   if (process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT) {
+    // List the names (never the values) of the configuration this function can
+    // actually see. That distinguishes "the variable was never set" from "it is
+    // set but scoped away from Functions, or spelled differently" — which the
+    // bare message cannot, and which is otherwise a guessing game.
+    const visible = Object.keys(process.env)
+      .filter((k) => /TURSO|DATABASE|LIBSQL|^REF_|^SMTP_/i.test(k))
+      .sort();
+
     throw new Error(
       'TURSO_DATABASE_URL is not set. A serverless deploy has no persistent disk, so it ' +
-      'needs a hosted database. Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in the site\'s ' +
-      'environment variables, then redeploy with "Clear cache and deploy site" — environment ' +
-      'variable changes do not apply to an already-built deploy. See DEPLOY.md.'
+      'needs a hosted database.\n' +
+      `Config variables visible to this function: ${visible.length ? visible.join(', ') : '(none)'}\n` +
+      'If TURSO_DATABASE_URL is listed above, it is set but empty. If it is not listed, either ' +
+      'it was never saved, or its Scopes exclude Functions, or its value is limited to a deploy ' +
+      'context other than the one serving this request. Check Site configuration → Environment ' +
+      'variables → TURSO_DATABASE_URL → Scopes (must include Functions) and Deploy contexts. ' +
+      'Then redeploy. See DEPLOY.md.'
     );
   }
 
