@@ -32,14 +32,39 @@
 const path = require('path');
 const fs = require('fs');
 
-const TURSO_URL = process.env.TURSO_DATABASE_URL || null;
+/**
+ * Read a configuration variable, tolerating the wrong capitalisation.
+ *
+ * Environment variable names are case-sensitive on Linux, but a hosting
+ * dashboard is a free-text box — "Turso_Database_URL" saves happily and then
+ * the app cannot see it, which is indistinguishable from never setting it at
+ * all. Accept a case-insensitive match so a redeploy is not wasted, but say so
+ * loudly: the name should still be corrected.
+ */
+function envLookup(name) {
+  if (process.env[name]) return process.env[name];
+  const match = Object.keys(process.env).find(
+    (k) => k.toLowerCase() === name.toLowerCase() && process.env[k]
+  );
+  if (match) {
+    console.warn(
+      `[config] Found "${match}" and using it as ${name}. Environment variable names are ` +
+      `case-sensitive — rename it to ${name} so this keeps working elsewhere.`
+    );
+    return process.env[match];
+  }
+  return null;
+}
+
+const TURSO_URL = envLookup('TURSO_DATABASE_URL');
+const TURSO_TOKEN = envLookup('TURSO_AUTH_TOKEN');
 
 let client;
 if (TURSO_URL) {
   // HTTP-only client — pure JS, no native binary. Statically required so
   // serverless bundlers (Netlify esbuild) include it.
   const { createClient } = require('@libsql/client/web');
-  client = createClient({ url: TURSO_URL, authToken: process.env.TURSO_AUTH_TOKEN });
+  client = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
 } else {
   // Serverless hosts have a read-only filesystem, so falling back to a local
   // SQLite file there fails with an opaque EROFS while the module is loading —
@@ -58,6 +83,9 @@ if (TURSO_URL) {
       'TURSO_DATABASE_URL is not set. A serverless deploy has no persistent disk, so it ' +
       'needs a hosted database.\n' +
       `Config variables visible to this function: ${visible.length ? visible.join(', ') : '(none)'}\n` +
+      (visible.some((k) => k.toLowerCase() === 'turso_database_url')
+        ? 'One of those matches TURSO_DATABASE_URL apart from capitalisation — but it is empty.\n'
+        : '') +
       'If TURSO_DATABASE_URL is listed above, it is set but empty. If it is not listed, either ' +
       'it was never saved, or its Scopes exclude Functions, or its value is limited to a deploy ' +
       'context other than the one serving this request. Check Site configuration → Environment ' +
