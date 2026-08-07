@@ -511,7 +511,19 @@ $('#pwForm').addEventListener('submit', async (e) => {
 
 // ── go ──────────────────────────────────────────────────────────────────────
 
-boot().catch((e) => {
+function bootFailure(e) {
+  // A 502/503 here means the API function itself failed to start — almost always
+  // missing database environment variables on a fresh serverless deploy. Say so,
+  // rather than showing a bare status code.
+  const gateway = /\((50[234])\)/.test(e.message);
+  const hint = gateway
+    ? 'The API did not start. On a new Netlify deploy this is nearly always missing ' +
+      'TURSO_DATABASE_URL / TURSO_AUTH_TOKEN — set them, then redeploy with ' +
+      '"Clear cache and deploy site". The exact error is in Netlify \u2192 Functions \u2192 api \u2192 Logs.'
+    : 'Reload the page. If it keeps happening, check the server logs.';
   document.body.innerHTML =
-    `<div class="wrap"><p class="error">Could not start: ${e.message}</p></div>`;
-});
+    '<div class="wrap"><div class="card"><h2>Could not start</h2>' +
+    '<p class="error">' + e.message + '</p><p>' + hint + '</p></div></div>';
+}
+
+boot().catch(bootFailure);

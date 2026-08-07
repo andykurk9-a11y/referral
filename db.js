@@ -41,6 +41,19 @@ if (TURSO_URL) {
   const { createClient } = require('@libsql/client/web');
   client = createClient({ url: TURSO_URL, authToken: process.env.TURSO_AUTH_TOKEN });
 } else {
+  // Serverless hosts have a read-only filesystem, so falling back to a local
+  // SQLite file there fails with an opaque EROFS while the module is loading —
+  // which surfaces to the browser as a bare 502 with nothing to go on. Say what
+  // is actually wrong instead.
+  if (process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT) {
+    throw new Error(
+      'TURSO_DATABASE_URL is not set. A serverless deploy has no persistent disk, so it ' +
+      'needs a hosted database. Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in the site\'s ' +
+      'environment variables, then redeploy with "Clear cache and deploy site" — environment ' +
+      'variable changes do not apply to an already-built deploy. See DEPLOY.md.'
+    );
+  }
+
   const DATA_DIR = process.env.REF_DATA_DIR || path.join(__dirname, 'data');
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   const DB_PATH = process.env.REF_DB_PATH || path.join(DATA_DIR, 'referral.db');
